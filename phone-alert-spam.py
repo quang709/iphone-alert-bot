@@ -36,13 +36,15 @@ async def alert_device(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         first_device = list(devices.values())[0]
         first_device.play_sound()
-        await update.message.reply_text(f"✅ Đã gửi lệnh phát âm thanh tới {alias} ({first_device['name']})")
+        await update.message.reply_text(
+            f"✅ Đã gửi lệnh phát âm thanh tới {alias} ({first_device['name']})"
+        )
     except Exception as e:
         await update.message.reply_text(f"❌ Lỗi: {str(e)}")
 
 app_bot.add_handler(CommandHandler("alert", alert_device))
 
-# Webhook
+# Webhook handler
 @fastapi_app.post(f"/webhook/{TOKEN}")
 async def webhook_handler(request: Request):
     data = await request.json()
@@ -50,6 +52,14 @@ async def webhook_handler(request: Request):
     await app_bot.process_update(update)
     return {"status": "ok"}
 
+# Khởi tạo bot khi Render start
 @fastapi_app.on_event("startup")
 async def startup_event():
+    await app_bot.initialize()
+    await app_bot.start()
     await app_bot.bot.set_webhook(f"{WEBHOOK_URL}/webhook/{TOKEN}")
+
+@fastapi_app.on_event("shutdown")
+async def shutdown_event():
+    await app_bot.stop()
+    await app_bot.shutdown()
