@@ -1,1 +1,4 @@
 python-telegram-bot==21.6
+pyicloud-ipd==0.10.2
+fastapi==0.103.0
+uvicorn==0.23.2
