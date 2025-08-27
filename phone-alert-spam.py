@@ -13,22 +13,32 @@ logging.basicConfig(level=logging.INFO)     # Cấu hình log mức INFO (in ra 
 logger = logging.getLogger("tg-icloud-bot") # Tạo logger riêng tên 'tg-icloud-bot'
 
 TG_TOKEN = os.getenv("TG_TOKEN")
-
 ICLOUD_ACCOUNTS = []
+# Tạo dict tạm để sắp xếp theo số
+accounts_map = {}
+
 for key, value in os.environ.items():
     if key.startswith("ICLOUD_ACCOUNT_") and value:
         try:
-            email, password = value.split(":", 1)
-            ICLOUD_ACCOUNTS.append({
-                "email": email.strip(),
-                "password": password.strip()
-            })
+            # Lấy số sau ICLOUD_ACCOUNT_
+            match = re.match(r"ICLOUD_ACCOUNT_(\d+)", key)
+            if match:
+                idx = int(match.group(1)) - 1  # chuyển về index bắt đầu từ 0
+                email, password = value.split(":", 1)
+                accounts_map[idx] = {
+                    "email": email.strip(),
+                    "password": password.strip()
+                }
+                logger.info(f"✅ Đã load account {idx+1} từ {key}")
         except ValueError:
-            logger.warning(f"⚠️ Sai format biến {key}, phải dạng email:password")
+            logger.warning(f"⚠️ Sai format biến {key}, phải là email:password")
 
-if not ICLOUD_ACCOUNTS:
+# Sắp xếp theo index và đưa vào list đúng vị trí
+if accounts_map:
+    max_idx = max(accounts_map.keys())
+    ICLOUD_ACCOUNTS = [accounts_map.get(i) for i in range(max_idx + 1)]
+else:
     logger.error("❌ Chưa cấu hình ICLOUD_ACCOUNT_x trong env.")
-
 apis = {}
 awaiting_2fa = {}
 ring_tasks = {}  # (account_index, device_index) -> asyncio.Task
