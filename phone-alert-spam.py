@@ -14,11 +14,20 @@ logger = logging.getLogger("tg-icloud-bot") # Tạo logger riêng tên 'tg-iclou
 
 TG_TOKEN = os.getenv("TG_TOKEN")
 
-ICLOUD_ACCOUNTS = [
-    {"email": os.getenv("ICLOUD_EMAIL_1"), "password": os.getenv("ICLOUD_PASSWORD_1")},
-    {"email": os.getenv("ICLOUD_EMAIL_2"), "password": os.getenv("ICLOUD_PASSWORD_2")},
-    {"email": os.getenv("ICLOUD_EMAIL_3"), "password": os.getenv("ICLOUD_PASSWORD_3")},
-]
+ICLOUD_ACCOUNTS = []
+for key, value in os.environ.items():
+    if key.startswith("ICLOUD_ACCOUNT_") and value:
+        try:
+            email, password = value.split(":", 1)
+            ICLOUD_ACCOUNTS.append({
+                "email": email.strip(),
+                "password": password.strip()
+            })
+        except ValueError:
+            logger.warning(f"⚠️ Sai format biến {key}, phải dạng email:password")
+
+if not ICLOUD_ACCOUNTS:
+    logger.error("❌ Chưa cấu hình ICLOUD_ACCOUNT_x trong env.")
 
 apis = {}
 awaiting_2fa = {}
